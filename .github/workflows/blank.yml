@@ -1,4 +1,5 @@
 name: Android CI (Debug APK)
+
 on:
   push:
     branches: [ main ]
@@ -7,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,16 +27,23 @@ jobs:
           sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
           yes | sdkmanager --licenses
 
+      # 🔓 নিশ্চিত করুন ZIP ফাইল আপনার রিপোতে আছে (root-এ)
       - name: Unzip project
         run: unzip -o UltraMaxLite-Android-WGReady.zip
 
-      - name: Build Debug APK (Gradle 8.5)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.5
-          build-root-directory: UltraMaxLite-Android-Starter
-          arguments: assembleDebug
+      # ✅ Wrapper জেনারেট করুন (cache dependency নেই)
+      - name: Generate Gradle Wrapper (8.5)
+        working-directory: UltraMaxLite-Android-Starter
+        run: |
+          gradle wrapper --gradle-version 8.5
+          ./gradlew --version
 
+      # 🛠️ Build Debug APK
+      - name: Build Debug
+        working-directory: UltraMaxLite-Android-Starter
+        run: ./gradlew assembleDebug --no-daemon
+
+      # ⬆️ APK Artifact আপলোড
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
